@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deteksi Daun - Web Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1B5E20 0%, #4CAF50 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #2E7D32;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upload-area {
+            border: 3px dashed #4CAF50;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .upload-area:hover {
+            border-color: #2E7D32;
+            background: #e8f5e9;
+        }
+
+        .upload-area.dragover {
+            background: #c8e6c9;
+            border-color: #2E7D32;
+        }
+
+        .upload-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+
+        .preview-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .preview-container.active {
+            display: block;
+        }
+
+        #preview {
+            width: 100%;
+            max-height: 400px;
+            object-fit: contain;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2E7D32, #4CAF50);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(46, 125, 50, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .model-selector {
+            margin: 20px 0;
+        }
+
+        .model-selector label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .radio-option input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #2E7D32;
+        }
+
+        .result-card {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .result-card.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-header {
+            background: linear-gradient(135deg, #2E7D32, #4CAF50);
+            color: white;
+            padding: 25px;
+            border-radius: 15px 15px 0 0;
+            text-align: center;
+        }
+
+        .result-header h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .result-body {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 0 0 15px 15px;
+        }
+
+        .confidence-bar {
+            margin: 20px 0;
+        }
+
+        .confidence-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .progress {
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-bar.high {
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+        }
+
+        .progress-bar.medium {
+            background: linear-gradient(90deg, #FFC107, #FF9800);
+        }
+
+        .progress-bar.low {
+            background: linear-gradient(90deg, #FF5722, #f44336);
+        }
+
+        .detection-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .info-item .label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .info-item .value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2E7D32;
+        }
+
+        .annotated-image {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .annotated-image img {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loader.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #e0e0e0;
+            border-top: 4px solid #2E7D32;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 20px;
+            background: #e8f5e9;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .classes-list {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 10px;
+        }
+
+        .classes-list h4 {
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        .classes-list ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .classes-list li {
+            background: #2E7D32;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍃 Deteksi Daun</h1>
+            <p>Identifikasi jenis daun dengan menggunakan AI (CNN & YOLO)</p>
+        </header>
+
+        <div class="main-content">
+            <div class="card">
+                <h2>📷 Input Gambar</h2>
+                
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span>Server Connected - Model Ready</span>
+                </div>
+
+                <div class="model-selector">
+                    <label>Pilih Model:</label>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="model" value="unified" checked>
+                            <span>Auto Detect</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="model" value="cnn">
+                            <span>CNN Only</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="model" value="yolo">
+                            <span>YOLO Only</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="upload-area" id="dropZone">
+                    <div class="upload-icon">📸</div>
+                    <p><strong>Klik untuk upload</strong> atau drag & drop</p>
+                    <p style="font-size: 0.9rem; color: #666; margin-top: 10px;">Format: JPG, PNG (Max 10MB)</p>
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                </div>
+
+                <div class="preview-container" id="previewContainer">
+                    <img id="preview" alt="Preview">
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="detectBtn" disabled>
+                        🔍 Deteksi Daun
+                    </button>
+                    <button class="btn btn-secondary" id="clearBtn">
+                        🗑️ Hapus
+                    </button>
+                </div>
+
+                <div class="classes-list">
+                    <h4>Jenis Daun yang Didukung:</h4>
+                    <ul>
+                        <li>Daun Jeruk</li>
+                        <li>Daun Kari</li>
+                        <li>Daun Kunyit</li>
+                        <li>Daun Pandan</li>
+                        <li>Daun Salam</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📊 Hasil Deteksi</h2>
+
+                <div class="loader" id="loader">
+                    <div class="spinner"></div>
+                    <p>Menganalisis gambar...</p>
+                </div>
+
+                <div class="result-card" id="resultCard">
+                    <div class="result-header">
+                        <h3 id="resultTitle">Daun Jeruk</h3>
+                        <p id="resultModel">CNN Classification</p>
+                    </div>
+                    <div class="result-body">
+                        <div class="confidence-bar">
+                            <div class="confidence-label">
+                                <span>Tingkat Kepercayaan</span>
+                                <span id="confidenceValue">95.5%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar high" id="confidenceBar" style="width: 95.5%"></div>
+                            </div>
+                        </div>
+
+                        <div class="detection-info">
+                            <div class="info-item">
+                                <div class="label">Model</div>
+                                <div class="value" id="modelUsed">CNN</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="label">Total Deteksi</div>
+                                <div class="value" id="totalDetections">1</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="label">Waktu Proses</div>
+                                <div class="value" id="processingTime">0.5s</div>
+                            </div>
+                        </div>
+
+                        <div class="annotated-image" id="annotatedImage">
+                            <h4 style="margin-bottom: 10px;">Gambar Hasil Deteksi:</h4>
+                            <img id="annotatedImg" alt="Annotated">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="emptyState" style="text-align: center; padding: 60px 20px; color: #999;">
+                    <div style="font-size: 60px; margin-bottom: 20px;">🔮</div>
+                    <p>Upload gambar daun untuk melihat hasil deteksi</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+        const previewContainer = document.getElementById('previewContainer');
+        const detectBtn = document.getElementById('detectBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const loader = document.getElementById('loader');
+        const resultCard = document.getElementById('resultCard');
+        const emptyState = document.getElementById('emptyState');
+
+        let selectedFile = null;
+
+        // Drop zone events
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Mohon pilih file gambar!');
+                return;
+            }
+
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.src = e.target.result;
+                previewContainer.classList.add('active');
+                detectBtn.disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        clearBtn.addEventListener('click', () => {
+            selectedFile = null;
+            preview.src = '';
+            previewContainer.classList.remove('active');
+            detectBtn.disabled = true;
+            resultCard.classList.remove('active');
+            emptyState.style.display = 'block';
+            fileInput.value = '';
+        });
+
+        detectBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            const model = document.querySelector('input[name="model"]:checked').value;
+            
+            loader.classList.add('active');
+            resultCard.classList.remove('active');
+            emptyState.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            try {
+                const endpoint = model === 'unified' ? '/predict' : `/predict/${model}`;
+                const startTime = Date.now();
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                const processingTime = ((Date.now() - startTime) / 1000).toFixed(2);
+
+                if (data.success) {
+                    document.getElementById('resultTitle').textContent = 
+                        data.predicted_class ? 
+                        data.predicted_class.charAt(0).toUpperCase() + data.predicted_class.slice(1) : 
+                        'Unknown';
+
+                    document.getElementById('resultModel').textContent = 
+                        model === 'unified' ? 
+                        (data.model ? data.model.toUpperCase() : 'AUTO') : 
+                        model.toUpperCase();
+
+                    const confidence = (data.confidence * 100).toFixed(1);
+                    document.getElementById('confidenceValue').textContent = `${confidence}%`;
+                    
+                    const confidenceBar = document.getElementById('confidenceBar');
+                    confidenceBar.style.width = `${confidence}%`;
+                    confidenceBar.className = 'progress-bar ' + 
+                        (confidence >= 80 ? 'high' : confidence >= 60 ? 'medium' : 'low');
+
+                    document.getElementById('modelUsed').textContent = 
+                        data.model ? data.model.toUpperCase() : model.toUpperCase();
+                    document.getElementById('totalDetections').textContent = 
+                        data.total_detections || data.detections?.length || 1;
+                    document.getElementById('processingTime').textContent = `${processingTime}s`;
+
+                    if (data.annotated_image) {
+                        document.getElementById('annotatedImg').src = 
+                            'data:image/jpeg;base64,' + data.annotated_image;
+                        document.getElementById('annotatedImage').style.display = 'block';
+                    } else {
+                        document.getElementById('annotatedImage').style.display = 'none';
+                    }
+
+                    resultCard.classList.add('active');
+                } else {
+                    alert('Deteksi gagal: ' + data.message);
+                    emptyState.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan: ' + error.message);
+                emptyState.style.display = 'block';
+            } finally {
+                loader.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
