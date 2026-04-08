@@ -8,6 +8,8 @@ import 'app/services/api_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ApiService.init();
+  final apiService = ApiService();
+  Get.put<ApiService>(apiService);
   runApp(const MyApp());
 }
 

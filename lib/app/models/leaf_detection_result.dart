@@ -3,12 +3,21 @@ import 'dart:io';
 class LeafDetectionResult {
   final bool success;
   final String message;
+  // CNN results
   final String? predictedClass;
   final double? confidence;
+  // YOLO results
   final List<YOLODetection>? detections;
+  // Combined results
   final String? annotatedImagePath;
-  final String modelUsed;
+  final String modelUsed; // 'yolo', 'cnn', 'both', or 'unified'
   final DateTime timestamp;
+  
+  // Both results for unified model
+  final String? yoloClass;
+  final double? yoloConfidence;
+  final String? cnnClass;
+  final double? cnnConfidence;
 
   LeafDetectionResult({
     required this.success,
@@ -19,6 +28,10 @@ class LeafDetectionResult {
     this.annotatedImagePath,
     required this.modelUsed,
     required this.timestamp,
+    this.yoloClass,
+    this.yoloConfidence,
+    this.cnnClass,
+    this.cnnConfidence,
   });
 
   factory LeafDetectionResult.fromJson(Map<String, dynamic> json) {
@@ -34,19 +47,47 @@ class LeafDetectionResult {
       
       print('DEBUG: Unified endpoint - yolo: ${yoloData?.keys}, cnn: ${cnnData?.keys}');
       
+      // Extract YOLO results
+      String? yoloClass;
+      double? yoloConfidence;
+      List<YOLODetection>? yoloDetections;
+      
+      if (yoloData != null) {
+        if (yoloData['predictions'] != null && (yoloData['predictions'] as List).isNotEmpty) {
+          final firstPred = yoloData['predictions'][0];
+          yoloClass = firstPred['detected_class'] ?? firstPred['class'];
+          yoloConfidence = (firstPred['confidence'] ?? 0).toDouble();
+          yoloDetections = (yoloData['predictions'] as List)
+              .map((d) => YOLODetection.fromJson(d))
+              .toList();
+        } else if (yoloData['predicted_class'] != null) {
+          yoloClass = yoloData['predicted_class'];
+          yoloConfidence = (yoloData['confidence'] ?? 0).toDouble();
+        }
+      }
+      
+      // Extract CNN results
+      String? cnnClass;
+      double? cnnConfidence;
+      
+      if (cnnData != null) {
+        cnnClass = cnnData['predicted_class'];
+        cnnConfidence = (cnnData['confidence'] ?? 0).toDouble();
+      }
+      
       return LeafDetectionResult(
         success: success,
-        message: json['comparison_note'] ?? '',
-        predictedClass: cnnData?['predicted_class'],
-        confidence: cnnData?['confidence']?.toDouble(),
-        detections: yoloData?['predictions'] != null
-            ? (yoloData['predictions'] as List)
-                .map((d) => YOLODetection.fromJson(d))
-                .toList()
-            : null,
+        message: json['comparison_note'] ?? json['message'] ?? '',
+        predictedClass: cnnClass ?? yoloClass, // Primary display
+        confidence: cnnConfidence ?? yoloConfidence, // Primary confidence
+        detections: yoloDetections,
         annotatedImagePath: cnnData?['annotated_image'] ?? yoloData?['annotated_image'],
         modelUsed: 'both',
         timestamp: DateTime.now(),
+        yoloClass: yoloClass,
+        yoloConfidence: yoloConfidence,
+        cnnClass: cnnClass,
+        cnnConfidence: cnnConfidence,
       );
     }
     

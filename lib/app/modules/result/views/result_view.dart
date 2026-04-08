@@ -19,6 +19,11 @@ class ResultView extends GetView<ResultController> {
       );
     }
 
+    // Check if both models are available
+    final bool isBoth = result.modelUsed == 'both' || result.modelUsed == 'unified';
+    final bool hasYolo = result.yoloClass != null;
+    final bool hasCnn = result.cnnClass != null;
+    
     // For YOLO, get class and confidence from first detection; for CNN, use top-level
     final displayClass = result.detections != null && result.detections!.isNotEmpty
         ? result.detections![0].className
@@ -34,23 +39,169 @@ class ResultView extends GetView<ResultController> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildResultCard(displayClass, confidence),
-              const SizedBox(height: 20),
-              _buildConfidenceIndicator(confidence),
-              const SizedBox(height: 20),
+              // Show both YOLO and CNN results if available
+              if (isBoth && hasYolo && hasCnn) ...[
+                _buildBothResultsCard(result),
+                const SizedBox(height: 20),
+              ] else ...[
+                _buildResultCard(displayClass, confidence),
+                const SizedBox(height: 20),
+                _buildConfidenceIndicator(confidence),
+                const SizedBox(height: 20),
+              ],
               _buildModelInfo(result.modelUsed),
               const SizedBox(height: 20),
               _buildImagePreview(),
-              const Spacer(),
+              const SizedBox(height: 20),
               _buildActionButtons(),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildBothResultsCard(result) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.deepPurple[700]!,
+            Colors.deepPurple[500]!,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.deepPurple.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.compare_arrows,
+            size: 40,
+            color: Colors.white,
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Hasil Deteksi Ganda',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              // YOLO Result
+              Expanded(
+                child: _buildModelResultCard(
+                  'YOLO',
+                  result.yoloClass ?? 'Tidak terdeteksi',
+                  (result.yoloConfidence ?? 0) * 100,
+                  Icons.location_on,
+                ),
+              ),
+              const SizedBox(width: 16),
+              // CNN Result
+              Expanded(
+                child: _buildModelResultCard(
+                  'CNN',
+                  result.cnnClass ?? 'Tidak terdeteksi',
+                  (result.cnnConfidence ?? 0) * 100,
+                  Icons.psychology,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Comparison note if available
+          if (result.message.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      result.message,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModelResultCard(String modelName, String leafClass, double confidence, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: Colors.deepPurple[600], size: 28),
+          const SizedBox(height: 8),
+          Text(
+            modelName,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _formatLeafName(leafClass),
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: _getConfidenceColor(confidence).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '${confidence.toStringAsFixed(1)}%',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: _getConfidenceColor(confidence),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
