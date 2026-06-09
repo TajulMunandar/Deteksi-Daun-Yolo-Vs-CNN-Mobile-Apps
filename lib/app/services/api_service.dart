@@ -8,11 +8,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:deteksi_daun_mobile/app/models/leaf_detection_result.dart';
 
 class ApiService extends GetxService {
-  static String _baseUrl = 'http://172.23.66.60:5000';
+  static String _baseUrl = 'https://vandila-leaf-detector.hf.space';
   
   static Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
-    _baseUrl = prefs.getString('api_url') ?? 'http://172.23.66.60:5000';
+    _baseUrl = prefs.getString('api_url') ?? 'https://vandila-leaf-detector.hf.space';
   }
   
   static String get baseUrl => _baseUrl;
@@ -29,7 +29,7 @@ class ApiService extends GetxService {
     try {
       // Refresh URL from preferences
       final prefs = await SharedPreferences.getInstance();
-      _baseUrl = prefs.getString('api_url') ?? 'http://172.23.66.60:5000';
+      _baseUrl = prefs.getString('api_url') ?? 'https://vandila-leaf-detector.hf.space';
       print('DEBUG: Using base URL: $_baseUrl');
       
       String endpoint;
@@ -95,7 +95,7 @@ class ApiService extends GetxService {
       print('!!! Stack trace: $stackTrace');
       return LeafDetectionResult(
         success: false,
-        message: 'Connection error: $e\n\nMake sure Flask server is running at http://172.23.66.60:5000',
+        message: 'Connection error: $e\n\nMake sure Flask server is running at https://vandila-leaf-detector.hf.space',
         modelUsed: model,
         timestamp: DateTime.now(),
       );
@@ -105,7 +105,7 @@ class ApiService extends GetxService {
   Future<bool> checkHealth() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      _baseUrl = prefs.getString('api_url') ?? 'http://172.23.66.60:5000';
+      _baseUrl = prefs.getString('api_url') ?? 'https://vandila-leaf-detector.hf.space';
       final healthUrl = '$_baseUrl/health';
       print('>>> API HIT: checkHealth() -> $healthUrl');
       final response = await http.get(Uri.parse(healthUrl));
@@ -120,7 +120,7 @@ class ApiService extends GetxService {
   Future<List<String>> getClasses() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      _baseUrl = prefs.getString('api_url') ?? 'http://172.23.66.60:5000';
+      _baseUrl = prefs.getString('api_url') ?? 'https://vandila-leaf-detector.hf.space';
       final classesUrl = '$_baseUrl/classes';
       print('>>> API HIT: getClasses() -> $classesUrl');
       final response = await http.get(Uri.parse(classesUrl));
