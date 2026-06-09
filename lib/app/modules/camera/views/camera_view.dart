@@ -132,40 +132,34 @@ class CameraView extends GetView<CameraController> {
         );
       }
       
+      final hasImage = controller.selectedImage.value != null || controller.selectedImageXFile.value != null;
+      
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => controller.pickImage(fromCamera: false),
-                icon: const Icon(Icons.photo_library),
-                label: const Text('Galeri'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  side: const BorderSide(color: Colors.green),
-                ),
+        child: SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              if (hasImage) {
+                controller.analyzeImage();
+              } else {
+                controller.pickImage();
+              }
+            },
+            icon: Icon(hasImage ? Icons.search : Icons.photo_library),
+            label: Text(
+              hasImage ? 'Deteksi' : 'Pilih dari Galeri',
+              style: const TextStyle(fontSize: 18),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: (controller.selectedImage.value != null || controller.selectedImageXFile.value != null)
-                    ? () => controller.analyzeImage()
-                    : () => controller.pickImage(fromCamera: true),
-                icon: const Icon(Icons.camera_alt),
-                label: Text(
-                  (controller.selectedImage.value != null || controller.selectedImageXFile.value != null)
-                      ? 'Deteksi'
-                      : 'Kamera',
-                ),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.green,
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       );
     });

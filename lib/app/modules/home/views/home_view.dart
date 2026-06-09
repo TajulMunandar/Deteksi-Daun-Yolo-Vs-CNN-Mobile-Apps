@@ -42,28 +42,8 @@ class HomeView extends GetView<HomeController> {
                 SizedBox(
                   width: double.infinity,
                   height: 56,
-                  child: ElevatedButton.icon(
-                    onPressed: () => Get.toNamed('/camera'),
-                    icon: const Icon(Icons.camera_alt, size: 24),
-                    label: const Text(
-                      'Ambil Foto',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
                   child: OutlinedButton.icon(
-                    onPressed: () => Get.toNamed('/camera?source=gallery'),
+                    onPressed: () => Get.toNamed('/camera'),
                     icon: const Icon(Icons.photo_library, size: 24),
                     label: const Text(
                       'Pilih dari Galeri',

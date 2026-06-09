@@ -20,10 +20,10 @@ class CameraController extends GetxController {
   final result = Rx<LeafDetectionResult?>(null);
   final errorMessage = ''.obs;
 
-  Future<void> pickImage({required bool fromCamera}) async {
+  Future<void> pickImage() async {
     try {
       final XFile? image = await _picker.pickImage(
-        source: fromCamera ? ImageSource.camera : ImageSource.gallery,
+        source: ImageSource.gallery,
         maxWidth: 1024,
         maxHeight: 1024,
         imageQuality: 85,
